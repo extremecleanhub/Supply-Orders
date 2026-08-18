@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>H&B — Pedido de Suministros</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #EEF0EF;
+    --paper: #FBFBFA;
+    --ink: #14181B;
+    --ink-soft: #5B6770;
+    --line: #D8DBD9;
+    --amber: #F2A93B;
+    --amber-ink: #5C3A05;
+    --teal: #1F6F63;
+    --teal-soft: #E4F0EE;
+    --red: #C0432E;
+    --font-display: 'Oswald', sans-serif;
+    --font-body: 'Inter', sans-serif;
+    --font-mono: 'IBM Plex Mono', monospace;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:var(--font-body);
+    -webkit-font-smoothing:antialiased;
+  }
+  .app{max-width:760px;margin:0 auto;min-height:100vh;background:var(--paper);position:relative;}
+
+  /* ---------- Header ---------- */
+  header.top{
+    background:var(--ink);
+    color:var(--paper);
+    padding:18px 20px 16px;
+    position:sticky;top:0;z-index:20;
+  }
+  .brandrow{display:flex;align-items:center;justify-content:space-between;}
+  .brand{display:flex;align-items:baseline;gap:10px;}
+  .brand .mark{
+    font-family:var(--font-display);
+    font-weight:700;font-size:22px;letter-spacing:0.5px;
+    background:var(--amber);color:var(--amber-ink);
+    padding:2px 8px;border-radius:3px;
+  }
+  .brand .name{font-family:var(--font-display);font-weight:600;font-size:15px;letter-spacing:0.5px;text-transform:uppercase;color:#C8CDCB;}
+  .admin-toggle{
+    background:none;border:1px solid #3A4247;color:#9AA3A8;
+    font-family:var(--font-mono);font-size:11px;padding:6px 10px;border-radius:20px;cursor:pointer;
+    letter-spacing:0.3px;
+  }
+  .admin-toggle:hover{border-color:var(--amber);color:var(--amber);}
+  .subhead{margin-top:10px;}
+  .subhead h1{font-family:var(--font-display);font-weight:600;font-size:24px;margin:0;letter-spacing:0.3px;}
+  .subhead p{margin:4px 0 0;color:#9AA3A8;font-size:13px;font-family:var(--font-mono);}
+
+  /* ---------- Gate (location entry) ---------- */
+  .gate{padding:60px 28px;text-align:center;}
+  .gate .tag{
+    display:inline-block;font-family:var(--font-mono);font-size:12px;color:var(--teal);
+    background:var(--teal-soft);padding:5px 12px;border-radius:20px;margin-bottom:18px;letter-spacing:0.4px;
+  }
+  .gate h2{font-family:var(--font-display);font-size:28px;margin:0 0 10px;font-weight:600;}
+  .gate p{color:var(--ink-soft);font-size:14px;line-height:1.5;max-width:420px;margin:0 auto 26px;}
+  .gate input{
+    width:100%;max-width:340px;padding:14px 16px;font-size:15px;border:1.5px solid var(--line);
+    border-radius:8px;font-family:var(--font-body);background:#fff;text-align:center;
+  }
+  .gate input:focus{outline:none;border-color:var(--amber);}
+  .gate button.primary{margin-top:16px;}
+
+  button.primary{
+    background:var(--ink);color:#fff;border:none;padding:14px 28px;font-family:var(--font-display);
+    font-weight:600;font-size:14px;letter-spacing:0.5px;text-transform:uppercase;border-radius:8px;cursor:pointer;
+    transition:transform 0.1s ease, background 0.15s ease;
+  }
+  button.primary:hover{background:#2A3238;}
+  button.primary:disabled{background:#B9BDBB;cursor:not-allowed;}
+  button.primary:active:not(:disabled){transform:scale(0.98);}
+
+  /* ---------- Aisle nav ---------- */
+  .aislenav{
+    display:flex;gap:6px;overflow-x:auto;padding:12px 16px;background:var(--paper);
+    border-bottom:1px solid var(--line);position:sticky;top:88px;z-index:15;
+  }
+  .aislenav::-webkit-scrollbar{display:none;}
+  .aislenav button{
+    flex:0 0 auto;font-family:var(--font-mono);font-size:11.5px;color:var(--ink-soft);
+    background:var(--bg);border:1px solid var(--line);padding:7px 12px;border-radius:20px;cursor:pointer;
+    white-space:nowrap;
+  }
+  .aislenav button.active{background:var(--ink);color:#fff;border-color:var(--ink);}
+
+  /* ---------- Catalog ---------- */
+  .catalog{padding:8px 16px 120px;}
+  .aisle-block{margin-top:26px;}
+  .aisle-head{
+    display:flex;align-items:center;gap:10px;margin-bottom:10px;padding:0 2px;
+  }
+  .aisle-num{
+    font-family:var(--font-mono);font-size:11px;font-weight:600;color:#fff;
+    background:var(--ink-soft);width:26px;height:26px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;flex:0 0 auto;
+  }
+  .aisle-head h3{font-family:var(--font-display);font-size:15.5px;font-weight:600;margin:0;letter-spacing:0.3px;text-transform:uppercase;color:var(--ink);}
+
+  .item-row{
+    display:flex;align-items:center;gap:12px;
+    background:#fff;border:1px solid var(--line);border-radius:10px;
+    padding:12px 14px;margin-bottom:8px;position:relative;overflow:hidden;
+  }
+  .item-row::before{
+    content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--line);
+  }
+  .item-row.has-qty::before{background:var(--amber);}
+  .icon-badge{
+    width:40px;height:40px;flex:0 0 auto;border-radius:8px;background:var(--bg);
+    border:1px solid var(--line);display:flex;align-items:center;justify-content:center;
+    color:var(--ink-soft);
+  }
+  .item-row.has-qty .icon-badge{background:var(--teal-soft);border-color:var(--teal);color:var(--teal);}
+  .item-info{flex:1;min-width:0;}
+  .item-unit{
+    font-family:var(--font-mono);font-size:10px;color:var(--teal);text-transform:uppercase;
+    letter-spacing:0.4px;font-weight:600;
+  }
+  .item-desc{font-size:13.5px;font-weight:500;color:var(--ink);margin-top:2px;line-height:1.3;}
+
+  .stepper{display:flex;align-items:center;gap:0;flex:0 0 auto;}
+  .stepper button{
+    width:30px;height:30px;border:1px solid var(--line);background:var(--bg);color:var(--ink);
+    font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;
+    font-family:var(--font-mono);
+  }
+  .stepper button:first-child{border-radius:6px 0 0 6px;}
+  .stepper button:last-child{border-radius:0 6px 6px 0;}
+  .stepper input{
+    width:38px;height:30px;text-align:center;border:1px solid var(--line);border-left:none;border-right:none;
+    font-family:var(--font-mono);font-size:14px;font-weight:600;-moz-appearance:textfield;
+  }
+  .stepper input::-webkit-outer-spin-button,.stepper input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+
+  /* ---------- Cart bar ---------- */
+  .cartbar{
+    position:fixed;bottom:0;left:0;right:0;z-index:20;
+    display:flex;justify-content:center;pointer-events:none;
+  }
+  .cartbar-inner{
+    max-width:760px;width:100%;background:var(--ink);color:#fff;margin:0;padding:14px 20px;
+    display:flex;align-items:center;justify-content:space-between;pointer-events:all;
+    box-shadow:0 -6px 20px rgba(0,0,0,0.15);
+  }
+  .cartbar .count{font-family:var(--font-mono);font-size:13px;color:#C8CDCB;}
+  .cartbar .count b{color:var(--amber);font-size:16px;}
+  .cartbar button{
+    background:var(--amber);color:var(--amber-ink);border:none;padding:12px 22px;
+    font-family:var(--font-display);font-weight:600;font-size:13.5px;letter-spacing:0.4px;
+    text-transform:uppercase;border-radius:7px;cursor:pointer;
+  }
+  .cartbar button:disabled{opacity:0.4;cursor:not-allowed;}
+
+  /* ---------- Confirmation ---------- */
+  .confirm{padding:70px 28px;text-align:center;}
+  .confirm .check{
+    width:56px;height:56px;border-radius:50%;background:var(--teal-soft);color:var(--teal);
+    display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-size:26px;
+  }
+  .confirm h2{font-family:var(--font-display);font-size:24px;margin:0 0 8px;}
+  .confirm p{color:var(--ink-soft);font-size:14px;margin:0 0 4px;}
+  .confirm .meta{font-family:var(--font-mono);font-size:12px;color:var(--ink-soft);margin-top:18px;background:var(--bg);padding:14px;border-radius:8px;text-align:left;max-width:360px;margin-left:auto;margin-right:auto;}
+  .confirm .meta div{display:flex;justify-content:space-between;padding:3px 0;}
+  .confirm button.link{
+    margin-top:24px;background:none;border:none;color:var(--ink-soft);text-decoration:underline;
+    font-family:var(--font-body);font-size:13px;cursor:pointer;
+  }
+
+  /* ---------- Admin ---------- */
+  .admin{padding:20px 18px 60px;}
+  .admin-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px;}
+  .admin-bar h2{font-family:var(--font-display);font-size:19px;margin:0;}
+  .month-pick{font-family:var(--font-mono);font-size:12.5px;padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:#fff;}
+  .stat-row{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;}
+  .stat{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:12px 16px;flex:1;min-width:120px;}
+  .stat .n{font-family:var(--font-mono);font-weight:600;font-size:22px;color:var(--ink);}
+  .stat .l{font-size:11px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:0.3px;margin-top:2px;}
+  table.consol{width:100%;border-collapse:collapse;font-size:13px;margin-top:6px;}
+  table.consol th{
+    text-align:left;font-family:var(--font-mono);font-size:10.5px;text-transform:uppercase;color:var(--ink-soft);
+    border-bottom:2px solid var(--line);padding:8px 6px;letter-spacing:0.3px;
+  }
+  table.consol td{padding:8px 6px;border-bottom:1px solid var(--line);}
+  table.consol td.qty{font-family:var(--font-mono);font-weight:600;text-align:right;color:var(--teal);}
+  .empty-admin{text-align:center;padding:50px 20px;color:var(--ink-soft);}
+  .locs-list{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 4px;}
+  .loc-chip{font-family:var(--font-mono);font-size:11px;background:var(--teal-soft);color:var(--teal);padding:4px 10px;border-radius:14px;}
+  .csv-btn{
+    font-family:var(--font-mono);font-size:11.5px;background:#fff;border:1px solid var(--line);
+    padding:8px 14px;border-radius:6px;cursor:pointer;color:var(--ink);margin-top:16px;
+  }
+  .csv-btn:hover{border-color:var(--ink);}
+  .loading{padding:60px;text-align:center;color:var(--ink-soft);font-family:var(--font-mono);font-size:13px;}
+</style>
+</head>
+<body>
+<svg style="display:none" aria-hidden="true">
+  <defs>
+    <symbol id="ic-glove" viewBox="0 0 24 24"><path d="M6 21V12c0-3.3 2.7-6 6-6s6 2.7 6 6v9H6z"/><path d="M9 9V6a1 1 0 0 1 2 0v3"/></symbol>
+    <symbol id="ic-cloth" viewBox="0 0 24 24"><rect x="4" y="6" width="16" height="14" rx="1.5"/><path d="M4 6l8 6 8-6"/></symbol>
+    <symbol id="ic-duster" viewBox="0 0 24 24"><line x1="12" y1="22" x2="12" y2="12"/><circle cx="9" cy="7" r="2"/><circle cx="12" cy="5" r="2"/><circle cx="15" cy="7" r="2"/><circle cx="12" cy="9" r="2"/></symbol>
+    <symbol id="ic-broom" viewBox="0 0 24 24"><line x1="12" y1="2" x2="12" y2="14"/><path d="M6 22l3-8h6l3 8"/><line x1="7" y1="22" x2="9" y2="14"/><line x1="17" y1="22" x2="15" y2="14"/></symbol>
+    <symbol id="ic-pad" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="ic-pail" viewBox="0 0 24 24"><path d="M5 8h14l-1.5 12a2 2 0 0 1-2 1.8H8.5a2 2 0 0 1-2-1.8z"/><path d="M8 8a4 4 0 0 1 8 0"/></symbol>
+    <symbol id="ic-jug" viewBox="0 0 24 24"><rect x="6" y="8" width="12" height="13" rx="1.5"/><rect x="10" y="4" width="4" height="4" rx="1"/><path d="M6 12H4.5v4H6"/></symbol>
+    <symbol id="ic-bottle" viewBox="0 0 24 24"><rect x="8" y="9" width="7" height="12" rx="1.5"/><path d="M11 9V6h3l2 2v2"/><line x1="14" y1="6" x2="17" y2="4"/></symbol>
+    <symbol id="ic-can" viewBox="0 0 24 24"><rect x="7" y="8" width="10" height="13" rx="2"/><rect x="9" y="4" width="6" height="4" rx="1"/></symbol>
+    <symbol id="ic-sign" viewBox="0 0 24 24"><path d="M12 3l9 18H3z"/><line x1="12" y1="10" x2="12" y2="15"/><circle cx="12" cy="18" r="0.6" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="ic-mopbucket" viewBox="0 0 24 24"><path d="M5 9h14l-1.5 11a2 2 0 0 1-2 1.8H8.5a2 2 0 0 1-2-1.8z"/><line x1="4" y1="6" x2="20" y2="6"/><line x1="12" y1="6" x2="12" y2="9"/></symbol>
+    <symbol id="ic-handle" viewBox="0 0 24 24"><line x1="12" y1="3" x2="12" y2="21"/><line x1="9" y1="3" x2="15" y2="3"/></symbol>
+    <symbol id="ic-towel" viewBox="0 0 24 24"><rect x="5" y="13" width="14" height="4" rx="1"/><rect x="5" y="8" width="14" height="4" rx="1"/></symbol>
+    <symbol id="ic-brush" viewBox="0 0 24 24"><line x1="12" y1="9" x2="12" y2="22"/><ellipse cx="12" cy="6" rx="3" ry="4"/></symbol>
+    <symbol id="ic-sponge" viewBox="0 0 24 24"><rect x="4" y="8" width="16" height="8" rx="2"/><circle cx="8" cy="12" r="0.6" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="0.6" fill="currentColor" stroke="none"/><circle cx="16" cy="12" r="0.6" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="ic-tool" viewBox="0 0 24 24"><rect x="4" y="10" width="8" height="4" rx="1"/><line x1="12" y1="12" x2="20" y2="12"/></symbol>
+    <symbol id="ic-pole" viewBox="0 0 24 24"><line x1="12" y1="2" x2="12" y2="22"/><line x1="9" y1="6" x2="15" y2="6"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="18" x2="15" y2="18"/></symbol>
+    <symbol id="ic-grabber" viewBox="0 0 24 24"><line x1="12" y1="3" x2="12" y2="16"/><path d="M8 16l4 5 4-5"/><path d="M8 16l-2 2M16 16l2 2"/></symbol>
+  </defs>
+</svg>
+<div id="root" class="app"></div>
+
+<script>
+const CATEGORIES = [
+  { key:"epp", name:"EPP y Limpieza General", items:[
+    {u:"Box", d:"Guantes de vinilo — Talla Mediana (100/caja)", icon:"glove"},
+    {u:"Box", d:"Guantes de vinilo — Talla Grande (100/caja)", icon:"glove"},
+    {u:"Box", d:"Guantes de vinilo — Talla X-Grande (100/caja)", icon:"glove"},
+    {u:"Bag", d:"Paños amarillos para polvo (50/bolsa)", icon:"cloth"},
+    {u:"Box", d:"Repuestos Swiffer Duster (12/caja)", icon:"cloth"},
+    {u:"Each", d:"Plumero de lana extensible 30–45\"", icon:"duster"},
+    {u:"Each", d:"Escoba angular con bandera", icon:"broom"},
+  ]},
+  { key:"pisos", name:"Cuidado de Pisos", items:[
+    {u:"Case", d:"Almohadillas blancas 20\"", icon:"pad"},
+    {u:"Case", d:"Almohadillas negras 20\"", icon:"pad"},
+    {u:"Case", d:"Almohadillas rojas 20\"", icon:"pad"},
+    {u:"Case", d:"Almohadillas rojas 11\"", icon:"pad"},
+    {u:"Pail", d:"Sellador de pisos Ishine — 5G", icon:"pail"},
+    {u:"Pail", d:"Emulsificador Shineline — 5G", icon:"pail"},
+    {u:"Case", d:"Restaurador Bounce Back — 4/G", icon:"jug"},
+    {u:"Case", d:"Spraybuff", icon:"bottle"},
+    {u:"Case", d:"Extraction II — 4/GL", icon:"jug"},
+  ]},
+  { key:"quimicos", name:"Químicos y Desinfectantes", items:[
+    {u:"Case", d:"Limpiador acero inoxidable en aerosol", icon:"can"},
+    {u:"Can", d:"Steriphene II (Lysol Neutra Air)", icon:"can"},
+    {u:"Can", d:"Pulidor de muebles Premium", icon:"can"},
+    {u:"Gallon", d:"Cloro (Bleach)", icon:"jug"},
+    {u:"Quart", d:"Sparcreme Cleanse — 1Q", icon:"bottle"},
+    {u:"Pail", d:"Desengrasante SC-200 — 5G", icon:"pail"},
+    {u:"Gallon", d:"COG Damp Mop #8 — 1G", icon:"jug"},
+    {u:"Gallon", d:"COG Clean by Peroxy #15", icon:"jug"},
+    {u:"Case", d:"COG Limpiador de vidrios #18 — 4/2L", icon:"bottle"},
+    {u:"Case", d:"COG NABC #1 — 4/2L", icon:"bottle"},
+    {u:"Gallon", d:"COG Tribase #17 — 1G", icon:"jug"},
+    {u:"Gallon", d:"COG Xcelente — 1G", icon:"jug"},
+  ]},
+  { key:"lavanderia", name:"Lavandería", items:[
+    {u:"5 Gal", d:"Cloro Clothesline Fresh", icon:"jug"},
+    {u:"5 Gal", d:"Detergente Clothesline Fresh", icon:"jug"},
+  ]},
+  { key:"accesorios", name:"Señalización y Accesorios", items:[
+    {u:"Each", d:"Señal de piso mojado", icon:"sign"},
+    {u:"Each", d:"Señal 'Cerrado por limpieza'", icon:"sign"},
+    {u:"Each", d:"Cubeta con exprimidor (mop bucket)", icon:"mopbucket"},
+    {u:"Each", d:"Mango para trapeador de polvo", icon:"handle"},
+    {u:"Each", d:"Mango para trapeador húmedo", icon:"handle"},
+    {u:"Pack", d:"Toallas de microfibra", icon:"towel"},
+    {u:"Each", d:"Cepillo para inodoro", icon:"brush"},
+    {u:"Each", d:"Esponja mágica", icon:"sponge"},
+    {u:"Each", d:"Botella spray 32oz", icon:"bottle"},
+    {u:"Each", d:"Espátula 4\"", icon:"tool"},
+    {u:"Each", d:"Mango de extensión 24ft", icon:"pole"},
+    {u:"Each", d:"Pinza recogedora (Nifty Nabber)", icon:"grabber"},
+  ]},
+];
+
+// flat item list with stable ids
+const ITEMS = [];
+CATEGORIES.forEach(cat => cat.items.forEach((it, i) => {
+  ITEMS.push({ id: cat.key + "-" + i, cat: cat.key, u: it.u, d: it.d, icon: it.icon });
+}));
+
+function monthKey(d){
+  return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0");
+}
+function monthLabel(mk){
+  const [y,m] = mk.split("-");
+  const names = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+  return names[parseInt(m,10)-1] + " " + y;
+}
+
+const state = {
+  view: "gate",       // gate | order | confirm | admin
+  location: "",
+  locInput: "",
+  qty: {},             // id -> qty
+  activeAisle: CATEGORIES[0].key,
+  month: monthKey(new Date()),
+  adminData: null,
+  adminLoading: false,
+  lastOrder: null,
+};
+
+const root = document.getElementById("root");
+
+function totalItems(){
+  return Object.values(state.qty).reduce((a,b)=>a+(b>0?b:0),0);
+}
+
+function render(){
+  if(state.view === "gate") return renderGate();
+  if(state.view === "order") return renderOrder();
+  if(state.view === "confirm") return renderConfirm();
+  if(state.view === "admin") return renderAdmin();
+}
+
+function renderHeader(showAdminToggle){
+  return `
+  <header class="top">
+    <div class="brandrow">
+      <div class="brand">
+        <span class="mark">H&B</span>
+        <span class="name">Facility Services</span>
+      </div>
+      ${showAdminToggle ? `<button class="admin-toggle" onclick="goAdmin()">Panel · uso interno</button>` : `<button class="admin-toggle" onclick="goGate()">Salir</button>`}
+    </div>
+    <div class="subhead">
+      <h1>Pedido de Suministros</h1>
+      <p>${monthLabel(state.month)} · Pedidos se cierran el día 1 de cada mes</p>
+    </div>
+  </header>`;
+}
+
+function renderGate(){
+  root.innerHTML = `
+    ${renderHeader(true)}
+    <div class="gate">
+      <span class="tag">Levanta tu pedido en 3 minutos</span>
+      <h2>¿Desde qué local pides?</h2>
+      <p>Escribe el nombre de tu ubicación tal como lo conoces internamente (ej. "Local Norte", "Sucursal Centro"). Así identificamos tu pedido.</p>
+      <input id="locinput" type="text" placeholder="Nombre de tu local" value="${escapeHtml(state.locInput)}" />
+      <div><button class="primary" style="margin-top:18px" onclick="startOrder()">Comenzar pedido</button></div>
+    </div>
+  `;
+  const input = document.getElementById("locinput");
+  input.addEventListener("input", e => { state.locInput = e.target.value; });
+  input.addEventListener("keydown", e => { if(e.key === "Enter") startOrder(); });
+  input.focus();
+}
+
+function startOrder(){
+  const name = state.locInput.trim();
+  if(!name){ return; }
+  state.location = name;
+  state.view = "order";
+  render();
+}
+
+function renderOrder(){
+  const nav = CATEGORIES.map(c => `<button class="${state.activeAisle===c.key?'active':''}" onclick="jumpAisle('${c.key}')">${c.name}</button>`).join("");
+  const blocks = CATEGORIES.map((c, idx) => {
+    const rows = c.items.map((it,i)=>{
+      const id = c.key+"-"+i;
+      const q = state.qty[id] || 0;
+      return `
+      <div class="item-row ${q>0?'has-qty':''}" id="row-${id}">
+        <div class="icon-badge"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><use href="#ic-${it.icon}"/></svg></div>
+        <div class="item-info">
+          <div class="item-unit">${it.u}</div>
+          <div class="item-desc">${it.d}</div>
+        </div>
+        <div class="stepper">
+          <button onclick="stepQty('${id}',-1)">−</button>
+          <input type="number" min="0" value="${q}" id="in-${id}" onchange="setQty('${id}', this.value)" />
+          <button onclick="stepQty('${id}',1)">+</button>
+        </div>
+      </div>`;
+    }).join("");
+    return `
+    <div class="aisle-block" id="aisle-${c.key}">
+      <div class="aisle-head">
+        <div class="aisle-num">${String(idx+1).padStart(2,"0")}</div>
+        <h3>${c.name}</h3>
+      </div>
+      ${rows}
+    </div>`;
+  }).join("");
+
+  root.innerHTML = `
+    ${renderHeader(false)}
+    <nav class="aislenav" id="aislenav">${nav}</nav>
+    <div class="catalog">${blocks}</div>
+    <div class="cartbar">
+      <div class="cartbar-inner">
+        <span class="count"><b id="cart-count">${totalItems()}</b> producto(s) en tu pedido</span>
+        <button id="submitbtn" ${totalItems()===0?"disabled":""} onclick="submitOrder()">Enviar pedido</button>
+      </div>
+    </div>
+  `;
+}
+
+function jumpAisle(key){
+  state.activeAisle = key;
+  document.getElementById("aisle-"+key).scrollIntoView({behavior:"smooth", block:"start"});
+  document.querySelectorAll(".aislenav button").forEach(b=>b.classList.remove("active"));
+  event.target.classList.add("active");
+}
+
+function stepQty(id, delta){
+  const cur = state.qty[id] || 0;
+  const next = Math.max(0, cur + delta);
+  state.qty[id] = next;
+  updateRow(id);
+}
+function setQty(id, val){
+  let n = parseInt(val,10);
+  if(isNaN(n) || n < 0) n = 0;
+  state.qty[id] = n;
+  updateRow(id);
+}
+function updateRow(id){
+  const input = document.getElementById("in-"+id);
+  if(input) input.value = state.qty[id];
+  const row = document.getElementById("row-"+id);
+  if(row) row.classList.toggle("has-qty", state.qty[id] > 0);
+  const countEl = document.getElementById("cart-count");
+  if(countEl) countEl.textContent = totalItems();
+  const btn = document.getElementById("submitbtn");
+  if(btn) btn.disabled = totalItems() === 0;
+}
+
+async function submitOrder(){
+  const btn = document.getElementById("submitbtn");
+  if(btn){ btn.disabled = true; btn.textContent = "Enviando…"; }
+  const orderedItems = ITEMS
+    .filter(it => (state.qty[it.id] || 0) > 0)
+    .map(it => ({ id: it.id, u: it.u, d: it.d, cat: it.cat, qty: state.qty[it.id] }));
+
+  const payload = {
+    location: state.location,
+    month: state.month,
+    timestamp: new Date().toISOString(),
+    items: orderedItems,
+  };
+
+  try{
+    const key = "order:" + state.month + ":" + state.location.toLowerCase().replace(/\s+/g,"_");
+    const result = await window.storage.set(key, JSON.stringify(payload), true);
+    if(!result){ throw new Error("Storage devolvió null"); }
+    state.lastOrder = payload;
+    state.view = "confirm";
+    render();
+  }catch(err){
+    console.error("Error guardando pedido:", err);
+    if(btn){ btn.disabled = false; btn.textContent = "Enviar pedido"; }
+    alert("No se pudo guardar el pedido. Revisa tu conexión e intenta de nuevo.");
+  }
+}
+
+function renderConfirm(){
+  const o = state.lastOrder;
+  const totalLines = o.items.length;
+  const totalUnits = o.items.reduce((a,b)=>a+b.qty,0);
+  root.innerHTML = `
+    ${renderHeader(false)}
+    <div class="confirm">
+      <div class="check">✓</div>
+      <h2>Pedido enviado</h2>
+      <p>Gracias, <b>${escapeHtml(o.location)}</b>. Tu pedido de ${monthLabel(o.month)} quedó registrado.</p>
+      <div class="meta">
+        <div><span>Líneas de producto</span><span>${totalLines}</span></div>
+        <div><span>Unidades totales</span><span>${totalUnits}</span></div>
+        <div><span>Enviado</span><span>${new Date(o.timestamp).toLocaleString('es-ES')}</span></div>
+      </div>
+      <button class="link" onclick="resetToGate()">Enviar otro pedido desde otro local</button>
+    </div>
+  `;
+}
+
+function resetToGate(){
+  state.qty = {};
+  state.locInput = "";
+  state.location = "";
+  state.lastOrder = null;
+  state.view = "gate";
+  render();
+}
+
+function goGate(){
+  state.view = "gate";
+  render();
+}
+
+async function goAdmin(){
+  state.view = "admin";
+  state.adminLoading = true;
+  render();
+  await loadAdminData();
+}
+
+async function loadAdminData(){
+  state.adminLoading = true;
+  render();
+  try{
+    const list = await window.storage.list("order:" + state.month + ":", true);
+    const keys = (list && list.keys) ? list.keys : [];
+    const orders = [];
+    for(const k of keys){
+      try{
+        const res = await window.storage.get(k, true);
+        if(res && res.value) orders.push(JSON.parse(res.value));
+      }catch(e){ /* skip unreadable key */ }
+    }
+    state.adminData = orders;
+  }catch(err){
+    console.error("Error cargando panel:", err);
+    state.adminData = [];
+  }
+  state.adminLoading = false;
+  render();
+}
+
+function onMonthChange(val){
+  state.month = val;
+  loadAdminData();
+}
+
+function renderAdmin(){
+  if(state.adminLoading){
+    root.innerHTML = `${renderHeader(false)}<div class="loading">Cargando pedidos de ${monthLabel(state.month)}…</div>`;
+    return;
+  }
+  const orders = state.adminData || [];
+  const now = new Date();
+  const months = [];
+  for(let i=0;i<4;i++){
+    const d = new Date(now.getFullYear(), now.getMonth()-i, 1);
+    months.push(monthKey(d));
+  }
+  const monthOptions = months.map(m=>`<option value="${m}" ${m===state.month?"selected":""}>${monthLabel(m)}</option>`).join("");
+
+  if(orders.length === 0){
+    root.innerHTML = `
+      ${renderHeader(false)}
+      <div class="admin">
+        <div class="admin-bar">
+          <h2>Panel consolidado</h2>
+          <select class="month-pick" onchange="onMonthChange(this.value)">${monthOptions}</select>
+        </div>
+        <div class="empty-admin">Todavía no hay pedidos registrados para ${monthLabel(state.month)}.<br>Comparte el link con cada local para que empiecen a llegar aquí.</div>
+      </div>`;
+    return;
+  }
+
+  // Aggregate
+  const agg = {}; // id -> {u,d,cat,qty}
+  orders.forEach(o => o.items.forEach(it => {
+    if(!agg[it.id]) agg[it.id] = { u: it.u, d: it.d, cat: it.cat, qty: 0 };
+    agg[it.id].qty += it.qty;
+  }));
+  const totalUnits = Object.values(agg).reduce((a,b)=>a+b.qty,0);
+
+  const rows = CATEGORIES.map(c => {
+    const catRows = ITEMS.filter(it=>it.cat===c.key && agg[it.id]).map(it => `
+      <tr><td>${it.d}</td><td class="qty">${agg[it.id].qty} <span style="color:var(--ink-soft);font-weight:400;">${it.u}</span></td></tr>
+    `).join("");
+    if(!catRows) return "";
+    return `<tr><td colspan="2" style="padding-top:16px;font-family:var(--font-mono);font-size:10.5px;text-transform:uppercase;color:var(--ink-soft);letter-spacing:0.4px;border-bottom:none;">${c.name}</td></tr>${catRows}`;
+  }).join("");
+
+  const locChips = orders.map(o=>`<span class="loc-chip">${escapeHtml(o.location)} · ${o.items.reduce((a,b)=>a+b.qty,0)}u</span>`).join("");
+
+  root.innerHTML = `
+    ${renderHeader(false)}
+    <div class="admin">
+      <div class="admin-bar">
+        <h2>Panel consolidado</h2>
+        <select class="month-pick" onchange="onMonthChange(this.value)">${monthOptions}</select>
+      </div>
+      <div class="stat-row">
+        <div class="stat"><div class="n">${orders.length}</div><div class="l">Locales reportaron</div></div>
+        <div class="stat"><div class="n">${Object.keys(agg).length}</div><div class="l">Productos distintos</div></div>
+        <div class="stat"><div class="n">${totalUnits}</div><div class="l">Unidades totales</div></div>
+      </div>
+      <div class="locs-list">${locChips}</div>
+      <table class="consol">
+        <thead><tr><th>Producto</th><th style="text-align:right">Total a pedir</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <button class="csv-btn" onclick="downloadCsv()">Descargar CSV consolidado</button>
+    </div>
+  `;
+}
+
+function downloadCsv(){
+  const orders = state.adminData || [];
+  const agg = {};
+  orders.forEach(o => o.items.forEach(it => {
+    if(!agg[it.id]) agg[it.id] = { u: it.u, d: it.d, qty: 0 };
+    agg[it.id].qty += it.qty;
+  }));
+  let csv = "Producto,Unidad,Cantidad total\n";
+  Object.values(agg).forEach(r => {
+    csv += `"${r.d.replace(/"/g,'""')}",${r.u},${r.qty}\n`;
+  });
+  const blob = new Blob([csv], {type:"text/csv;charset=utf-8;"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `pedido_consolidado_${state.month}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function escapeHtml(str){
+  const d = document.createElement("div");
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+render();
+</script>
+</body>
+</html>
